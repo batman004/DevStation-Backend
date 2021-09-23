@@ -1,9 +1,30 @@
+# Reference : 
+
+'''
+GET     /users/{user_id}                     Get a User by their ID
+DELETE  /users/{user_id}                     Remove a user by their ID
+POST    /users/{user_id}/posts               Create a post from this user
+GET     /users/{user_id}/followers           Get a list of followers of a user
+GET     /users/{user_id}/followers_count     Get the number of followers of a user
+GET     /users/{user_id}/following           Get the list of users this user is following
+GET     /users/{user_id}/following_count     Get the number of users this user follows
+GET     /users/{user_id}/posts               Get the messages sent by a user
+GET     /users/{user_id}/timeline            Get the timeline for this user
+PUT     /users/{user_id}                     Create a new user
+PUT     /users/{user_id}/following/{target}  Follow a user
+DELETE  /users/{user_id}/following/{target}  Unfollow a user
+
+'''
+
 #MongoDB driver
 import motor.motor_asyncio
-from model import Post
+from models import Post
+import os
+from dotenv import load_dotenv
 
-client = motor.motor_asyncio.AsyncIOMotorClient("localhost:27017")
+load_dotenv()
 
+client = motor.motor_asyncio.AsyncIOMotorClient(os.getenv("MONGODB_URL"))
 db = client.devstation_DB
 collection = db.posts
 
@@ -19,8 +40,8 @@ async def create_post(post):
     result = await collection.insert_one(document)
     return document
 
-async def update_post(username, body):
-    await collection.update_one({"username": username}, {"$set": {"body": body}})
+async def update_post(username, Updated_body):
+    await collection.update_one({"username": username}, {"$set": {"body": Updated_body}})
     document = await collection.find_one({"username": username})
     return document
 

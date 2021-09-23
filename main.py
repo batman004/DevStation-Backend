@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from model import Post
+from models import Post
 from database import (
     fetch_all_posts,
     create_post,
@@ -42,7 +42,7 @@ async def post_todo(post:Post):
 
 
 @app.put("/api/post{username}",response_model=Post)
-async def put_todo(id, data):
+async def put_todo(username, body):
     response = await update_post(username, body)
     if response:
         return response
