@@ -1,12 +1,9 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from models import Post
-from database import (
-    fetch_all_posts,
-    create_post,
-    update_post,
-    remove_post
-)
+from motor.motor_asyncio import AsyncIOMotorClient
+from config import settings
+from app.Devstation.routers import router as router
+
 
 #App Object
 app = FastAPI()
@@ -23,41 +20,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/")
-def read_root():
-    return {"Welcome to the default page"}
+@app.on_event("startup")
+async def startup_db_client():
+    app.mongodb_client = AsyncIOMotorClient(settings.DB_URL)
+    app.mongodb = app.mongodb_client[settings.DB_NAME]
 
-@app.get("/api/posts")
-async def get_posts():
-    response = await fetch_all_posts()
-    return response
+@app.on_event("shutdown")
+async def shutdown_db_client():
+    app.mongodb_client.close()
 
+app.include_router(router)
 
-@app.post("/api/post/")
-async def post_todo(post:Post):
-    response = await create_post(post.dict())
-    if response:
-        return response
-    raise HTTPException(400, "Something went wrong")
-
-
-@app.put("/api/post{username}",response_model=Post)
-async def put_todo(username, body):
-    response = await update_post(username, body)
-    if response:
-        return response
-    raise HTTPException(404, f"There is no post belonging to user : {username}")
-    
-
-# Login 
-
-#Signup
-
-# Follow
-
-# Unfollow
-
-# Like
-
-# Request
-
+if __name__ == "__main__":
+    uvicorn.run(
+        "main:app",
+        host=settings.HOST,
+        reload=settings.DEBUG_MODE,
+        port=settings.PORT,
+    )

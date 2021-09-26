@@ -15,38 +15,29 @@ PUT     /users/{user_id}/following/{target}  Follow a user
 DELETE  /users/{user_id}/following/{target}  Unfollow a user
 
 '''
+from fastapi import Request
+from .models import Post
 
-#MongoDB driver
-import motor.motor_asyncio
-from models import Post
-import os
-from dotenv import load_dotenv
 
-load_dotenv()
-
-client = motor.motor_asyncio.AsyncIOMotorClient(os.getenv("MONGODB_URL"))
-db = client.devstation_DB
-collection = db.posts
-
-async def fetch_all_posts():
+async def fetch_all_posts(request: Request):
     posts = []
-    cursor = collection.find({})
+    cursor = request.app.mongodb["posts"].find({})
     async for document in cursor:
         posts.append(Post(**document))
     return posts
 
-async def create_post(post):
+async def create_post(post, request: Request):
     document = post
-    result = await collection.insert_one(document)
+    result = await request.app.mongodb["posts"].insert_one(document)
     return document
 
-async def update_post(username, Updated_body):
-    await collection.update_one({"username": username}, {"$set": {"body": Updated_body}})
-    document = await collection.find_one({"username": username})
+async def update_post(username, Updated_body, request: Request):
+    await request.app.mongodb["posts"].update_one({"username": username}, {"$set": {"body": Updated_body}})
+    document = await request.app.mongodb["posts"].find_one({"username": username})
     return document
 
 
 # edit : update db to handle multiple posts from a user
-async def remove_post(username):
-    await collection.delete_one({"username": username})
+async def remove_post(username, request: Request):
+    await request.app.mongodb["posts"].delete_one({"username": username})
     return True
