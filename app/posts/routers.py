@@ -32,7 +32,6 @@ async def list_posts(username: str, request: Request):
         posts.append(doc)
     return posts
 
-
 @router.get("/{id}", response_description="Get a single post")
 async def show_post(id: str, request: Request):
     if (post := await request.app.mongodb["posts"].find_one({"_id": id})) is not None:
@@ -45,7 +44,7 @@ async def show_post(id: str, request: Request):
 async def update_post(id: str, request: Request, post: UpdatePostModel = Body(...)):
     post = {k: v for k, v in post.dict().items() if v is not None}
 
-    if len(task) >= 1:
+    if len(post) >= 1:
         update_result = await request.app.mongodb["posts"].update_one(
             {"_id": id}, {"$set": post}
         )
