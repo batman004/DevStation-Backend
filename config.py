@@ -1,6 +1,7 @@
 from pydantic import BaseSettings
-import os
-from decouple import config
+from dotenv import dotenv_values
+config = dotenv_values(".env") 
+
 
 class CommonSettings(BaseSettings):
     APP_NAME: str = "DevStation"
@@ -13,8 +14,8 @@ class ServerSettings(BaseSettings):
 
 
 class DatabaseSettings(BaseSettings):
-    DB_URL: config('MONGODB_URL')
-    DB_NAME: config('DB_NAME')
+    DB_URL: str = config['DB_URL']
+    DB_NAME: str = config['DB_NAME'] 
 
 
 class Settings(CommonSettings, ServerSettings, DatabaseSettings):
