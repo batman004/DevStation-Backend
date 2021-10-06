@@ -13,8 +13,10 @@ class User(BaseModel):
     password: str = Field(...)
     gender: str = Field(...)
     phone: str = Field(...)
-    following: int = Field(...)
-    followers: int = Field(...)
+    following_count: int = Field(...)
+    following: list
+    followers_count: int = Field(...)
+    followers: list
     posts_id: list
 
     @validator('username')
@@ -34,8 +36,10 @@ class User(BaseModel):
                 "password": "##@@##**",
                 "gender": "Male",
                 "phone": "1234567890",
-                "following":45,
-                "followers": 1000,
+                "following_count": 3,
+                "following":["575hg","74875h","fhdjfh"],
+                "followers_count": 1,
+                "followers": ["434hk"],
                 "posts_id":["8334","3h4k4","djfh44"]
             }
         }
