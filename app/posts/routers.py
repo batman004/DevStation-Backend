@@ -18,6 +18,7 @@ async def create_post(request: Request, post: PostModel = Body(...)):
         {"_id": new_post.inserted_id}
     )
 
+    #Adding post id to users collection
     request.app.mongodb["users"].update_one({"username":created_post['username']}, {'$push': {'posts_id': new_post.inserted_id}})
 
     return JSONResponse(status_code=status.HTTP_201_CREATED, content=created_post)
@@ -42,7 +43,7 @@ async def list_posts(username: str, request: Request):
 
     raise HTTPException(status_code=404, detail=f"Username : {username} not found")
 
-    
+
 
 @router.get("/{id}", response_description="Get a single post")
 async def show_post(id: str, request: Request):
@@ -78,9 +79,11 @@ async def update_post(id: str, request: Request, post: UpdatePostModel = Body(..
 
 @router.delete("/{id}", response_description="Delete Post")
 async def delete_Post(id: str, request: Request):
+
+    post = await request.app.mongodb["posts"].find_one({"_id": id})
+    # update user collection as well when post is deleted
+    request.app.mongodb["users"].update_one({"username":post['username']}, {'$pull': {'posts_id': post['_id']}})
     delete_result = await request.app.mongodb["posts"].delete_one({"_id": id})
-    print(delete_result)
-    # request.app.mongodb["users"].delete_one({"username":delete_result['username']}, {'$pull': {'posts_id': delete_result.inserted_id}})
 
     if delete_result.deleted_count == 1:
         return JSONResponse(status_code=status.HTTP_204_NO_CONTENT)
