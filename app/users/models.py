@@ -2,8 +2,6 @@ import uuid
 from typing import Optional
 from pydantic import BaseModel, Field, validator
 
-
-
 class User(BaseModel):
     id: str = Field(default_factory=uuid.uuid4, alias="_id")
     first_name: str = Field(...)
@@ -13,17 +11,16 @@ class User(BaseModel):
     password: str = Field(...)
     gender: str = Field(...)
     phone: str = Field(...)
-    following_count: int = Field(...)
-    following: list
-    followers_count: int = Field(...)
-    followers: list
-    posts_id: list
+    following_count: Optional[int] 
+    following: Optional[list]
+    followers_count: Optional[int] 
+    followers: Optional[list]
+    posts_id: Optional[list]
 
     @validator('username')
     def username_alphanumeric(cls, v):
         assert v.isalnum(), 'must be alphanumeric'
         return v
-
 
     class Config:
         schema_extra = {
@@ -44,3 +41,13 @@ class User(BaseModel):
             }
         }
 
+class Login(BaseModel):
+    username: str
+    password: str
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    username: Optional[str] = None
