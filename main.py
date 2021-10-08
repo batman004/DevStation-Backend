@@ -4,7 +4,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.posts.routers import router as posts_router
-# from app.users.routers import router as users_router
+from app.users.routers import router as users_router
 from config import settings
 
 app = FastAPI()
@@ -21,6 +21,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/")
+def read_root():
+    return {"message":"welcome to DevStation Backend !"}
+
 @app.on_event("startup")
 async def startup_db_client():
     app.mongodb_client = AsyncIOMotorClient(settings.DB_URL)
@@ -33,8 +37,7 @@ async def shutdown_db_client():
 
 
 app.include_router(posts_router, tags=["posts"], prefix="/post")
-
-# app.include_router(user_router, tags=["users"], prefix="/user")
+app.include_router(users_router, tags=["users"], prefix="/user")
 
 if __name__ == "__main__":
     uvicorn.run(
