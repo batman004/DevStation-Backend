@@ -3,7 +3,7 @@ from dotenv import dotenv_values
 import os
 
 config = dotenv_values(".env") 
-prod = True
+prod = False
 
 class CommonSettings(BaseSettings):
     APP_NAME: str = "DevStation"
