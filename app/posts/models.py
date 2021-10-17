@@ -13,6 +13,7 @@ class PostModel(BaseModel):
     time_added:Optional[str]
     likes:Optional[int]
     comments:Optional[list]
+    tags:Optional[list]
 
     class Config:
         allow_population_by_field_name = True
@@ -23,7 +24,8 @@ class PostModel(BaseModel):
                 "body": "Hello this is John",
                 "time_added":"2021-10-07 00:02:13.886088",
                 "likes":10,
-                "comments":["jrk6659gfk","fjkj56565"]
+                "comments":["jrk6659gfk","fjkj56565"],
+                "tags":["#newpost","#firstpost","#lovethis","#newintech"]
             }
         }
 
@@ -32,6 +34,7 @@ class UpdatePostModel(BaseModel):
 
     body: str = Field(...)
     time_added: Optional[str]
+    tags: Optional[list]
 
     class Config:
         schema_extra = {

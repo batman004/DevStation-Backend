@@ -46,6 +46,18 @@ async def list_posts(username: str, request: Request):
     raise HTTPException(status_code=404, detail=f"Username : {username} not found")
 
 
+@router.get("/tag/{tag}", response_description="List all posts based on a tag")
+async def list_tags(tag: str, request: Request):
+    posts=[]
+    for doc in await request.app.mongodb["posts"].find({"tags": tag }).to_list(length=100):
+        posts.append(doc)
+    if(len(posts)!=0):
+        return posts
+
+    raise HTTPException(status_code=404, detail=f"Tag : {tag} not found")
+
+ 
+
 
 @router.get("/{id}", response_description="Get a single post")
 async def show_post(id: str, request: Request):
@@ -54,6 +66,8 @@ async def show_post(id: str, request: Request):
         return post
 
     raise HTTPException(status_code=404, detail=f"Post {id} not found")
+
+
 
 
 @router.put("/{id}", response_description="Update a post")
