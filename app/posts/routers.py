@@ -62,7 +62,6 @@ async def list_tags(tag: str, request: Request):
 @router.get("/{id}", response_description="Get a single post")
 async def show_post(id: str, request: Request):
     if (post := await request.app.mongodb["posts"].find_one({"_id": id})) is not None:
-        print(post)
         return post
 
     raise HTTPException(status_code=404, detail=f"Post {id} not found")
@@ -141,9 +140,7 @@ async def comment_post(id: str, request: Request, comment: Comment = Body(...)):
 @router.get("/{id}/comments", response_description="Get the comments for a post")
 async def show_comments(id: str, request: Request):
     if (posts := await request.app.mongodb["posts"].find_one({"_id": id})) is not None:
-        print(posts)
         comments = posts["comments"]
-        print(comments)
         return comments
 
     raise HTTPException(status_code=404, detail=f"Post {id} not found")

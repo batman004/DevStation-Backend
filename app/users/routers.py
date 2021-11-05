@@ -1,15 +1,22 @@
 from fastapi import APIRouter, Body, HTTPException, Request, status, Depends
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
-from fastapi.security import OAuth2PasswordRequestForm
-
+from fastapi.security import OAuth2PasswordRequestForm, oauth2
 from .models import User, Token, TokenData, Login
 from .hashing import Hash
-from .jwt_token import create_access_token
+from .jwt_token import create_access_token, verify_token
 from .oauth import get_current_active_user
+from fastapi.security import OAuth2PasswordBearer
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 #router object for handling api routes
 router = APIRouter()
+
+@router.get("/",response_description="Get token of current user")
+async def home(token: str = Depends(oauth2_scheme)):
+    user_token = verify_token(token)
+    return {"token":user_token}
+
 
 # get user data {user_id},{username} -> user profile page
 @router.get("/me",response_model=User, response_description="Get details of current active user")
@@ -32,8 +39,9 @@ async def login(request:Request, form_data: OAuth2PasswordRequestForm = Depends(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail = f'No user found with username {form_data.username}')
     if not Hash.verify(user["password"],form_data.password):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail = f'Wrong Username or password')
-    access_token = create_access_token(data={"user": user["username"] })
+    access_token = create_access_token(data={"user": form_data.username })
     return {"access_token": access_token, "token_type": "bearer"}
+
 
 #signup
 @router.post("/signup", response_description="Signup for a new user")
@@ -61,12 +69,12 @@ async def follow_user(username_to_follow: str, request: Request, current_user:Us
     user = await request.app.mongodb["users"].find_one(
         {"username": current_user}
     )
-    request.app.mongodb["users"].update_one({"username":current_user}, {'$push': {'following': user_to_follow["_id"]}})
+    request.app.mongodb["users"].update_one({"username":current_user.username}, {'$push': {'following': user_to_follow["_id"]}})
     request.app.mongodb["users"].update_one({"username":username_to_follow}, {'$push': {'followers': user["_id"]}})
 
     #count of number of following for current user
     count = len(user["following"]) + 1
-    myquery = { "username": current_user }
+    myquery = { "username": current_user.username }
     newvalues = { "$set": { "following_count": count } }
     request.app.mongodb["users"].update_one(myquery, newvalues)
 
@@ -87,7 +95,7 @@ async def follow_user(username_to_follow: str, request: Request, current_user:Us
 async def user_feed(request: Request, current_user:User = Depends(get_current_active_user)):
     following = []
     posts=[]
-    user = await request.app.mongodb["users"].find_one({"username":current_user})
+    user = await request.app.mongodb["users"].find_one({"username":current_user.username})
     for obj in user["following"]:
         following.append(obj)
     if(len(following)!=0):
@@ -104,17 +112,54 @@ async def user_feed(request: Request, current_user:User = Depends(get_current_ac
 
 
 # unfollow a user
-# @router.delete("/{username}follow/{username_to_follow}",response_description="Follow a user")
-# async def follow_user(username: str, username_to_follow: str, request: Request):
-#     user = await request.app.mongodb["users"].find_one(
-#         {"username": username_to_follow}
-#     )
+@router.post("/me/follow/{username_to_unfollow}}",response_description="unfollow a user")
+async def unfollow_user(username_to_unfollow: str, request: Request, current_user:User = Depends(get_current_active_user)):
+    user_to_unfollow = await request.app.mongodb["users"].find_one(
+        {"username": username_to_unfollow}
+    )
+    user = await request.app.mongodb["users"].find_one(
+        {"username": current_user}
+    )
+    request.app.mongodb["users"].update_one({"username":current_user.username}, {'$pull': {'following': user_to_unfollow["_id"]}})
+    request.app.mongodb["users"].update_one({"username":username_to_unfollow}, {'$pull': {'followers': user["_id"]}})
+    
+    #count of number of following for current user
+    count = len(user["following"]) -1
+    myquery = { "username": current_user.username }
+    newvalues = { "$set": { "following_count": count } }
+    request.app.mongodb["users"].update_one(myquery, newvalues)
 
-#     request.app.mongodb["users"].update_one({"username":username}, {'$push': {'following': user["id"]}})
+    #count of number of followers for user which was unfollowed
+    count_u = len(user_to_unfollow["followers"]) -1
+    myquery_u = { "username": username_to_unfollow }
+    newvalues_u = { "$set": { "followers_count": count_u } }
+    request.app.mongodb["users"].update_one(myquery_u, newvalues_u)
+
+    if(not user_to_unfollow==0):
+        raise HTTPException(status_code=404, detail=f"Username : {username_to_unfollow} not found")
+    return{"unfollowed":username_to_unfollow}
 
 
 
+# delete user
+@router.delete("/{id}/delete", response_description="Delete user account")
+async def delete_user(request: Request, id:str):
 
-# delete account
+    user = await request.app.mongodb["users"].find_one({"_id": id})
+    # update posts collection as well when post is deleted
+
+    for pid in user["posts_id"]:
+        delete_post = await request.app.mongodb["posts"].delete_one({"_id": pid})
+        print("deleted post: ",pid)
+
+    # remove user    
+    delete_user = await request.app.mongodb["users"].delete_one({"_id": user["_id"]})
+    if delete_user.deleted_count == 1:
+        return {"deleted user" :id }
+
+    raise HTTPException(status_code=404, detail=f"User {id} not found")
+
+
+
 
 
