@@ -19,9 +19,11 @@ async def home(token: str = Depends(oauth2_scheme)):
 
 
 # get user data {user_id},{username} -> user profile page
-@router.get("/me",response_model=User, response_description="Get details of current active user")
-async def read_root(current_user:User = Depends(get_current_active_user)):
-	return current_user
+@router.get("/{username}", response_description="List all details about a user")
+async def list_posts(username: str, request: Request):
+    if (user_data := await request.app.mongodb["users"].find_one({"username": username})) is not None:
+        return user_data
+    raise HTTPException(status_code=404, detail=f"User: {username} not found")
 
 # get all users
 @router.get("/users", response_description="List all users")
@@ -32,15 +34,15 @@ async def list_posts(request: Request):
     return users
 
 #login
-@router.post("/login",response_model=Token, response_description="Login into app")
-async def login(request:Request, form_data: OAuth2PasswordRequestForm = Depends()):
-    user = await request.app.mongodb["users"].find_one({"username":form_data.username})
-    if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail = f'No user found with username {form_data.username}')
-    if not Hash.verify(user["password"],form_data.password):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail = f'Wrong Username or password')
-    access_token = create_access_token(data={"user": form_data.username })
-    return {"access_token": access_token, "token_type": "bearer"}
+@router.post("/login")
+async def login(request: Request, user_to_login: Login = Body(...)):
+	user = await request.app.mongodb["users"].find_one({"username":user_to_login.username})
+	if not user:
+		raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail = f'No user found with username: {user_to_login.username}')
+	if not Hash.verify(user["password"],user_to_login.password):
+		raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail = f'Wrong Username or password')
+
+	return {"login": "successful"}
 
 
 #signup
@@ -60,21 +62,22 @@ async def create_user(request: Request, user: User = Body(...)):
     )
     return JSONResponse(status_code=status.HTTP_201_CREATED, content=created_user)
 
+
 # follow a user
-@router.post("/me/follow/{username_to_follow}",response_description="Follow a user")
-async def follow_user(username_to_follow: str, request: Request, current_user:User = Depends(get_current_active_user)):
+@router.post("/{username}/follow/{username_to_follow}",response_description="Follow a user")
+async def follow_user(username: str, username_to_follow: str, request: Request):
     user_to_follow = await request.app.mongodb["users"].find_one(
         {"username": username_to_follow}
     )
     user = await request.app.mongodb["users"].find_one(
-        {"username": current_user}
+        {"username": username}
     )
-    request.app.mongodb["users"].update_one({"username":current_user.username}, {'$push': {'following': user_to_follow["_id"]}})
+    request.app.mongodb["users"].update_one({"username":username}, {'$push': {'following': user_to_follow["_id"]}})
     request.app.mongodb["users"].update_one({"username":username_to_follow}, {'$push': {'followers': user["_id"]}})
 
     #count of number of following for current user
     count = len(user["following"]) + 1
-    myquery = { "username": current_user.username }
+    myquery = { "username": username }
     newvalues = { "$set": { "following_count": count } }
     request.app.mongodb["users"].update_one(myquery, newvalues)
 
@@ -87,15 +90,15 @@ async def follow_user(username_to_follow: str, request: Request, current_user:Us
     # request.app.mongodb["users"].update_one({"username":username},{'following_count' :count })
     if(len(user_to_follow)==0):
         raise HTTPException(status_code=404, detail=f"Username : {username_to_follow} not found")
-
+    return {username_to_follow:"followed"}
 
 
 # User feed : show posts from the users that the current user has followed :
-@router.get("/me/feed", response_description="List all posts from the users which current user follows")
-async def user_feed(request: Request, current_user:User = Depends(get_current_active_user)):
+@router.get("/{username}/feed", response_description="List all posts from the users which current user follows")
+async def user_feed(username: str, request: Request):
     following = []
     posts=[]
-    user = await request.app.mongodb["users"].find_one({"username":current_user.username})
+    user = await request.app.mongodb["users"].find_one({"username":username})
     for obj in user["following"]:
         following.append(obj)
     if(len(following)!=0):
@@ -107,25 +110,24 @@ async def user_feed(request: Request, current_user:User = Depends(get_current_ac
                 posts.append(post)
         return posts
 
-    raise HTTPException(status_code=404, detail=f"Follow users to see their posts !")
-
+    raise HTTPException(status_code=404, detail=f"Follow users !")
 
 
 # unfollow a user
-@router.post("/me/follow/{username_to_unfollow}}",response_description="unfollow a user")
-async def unfollow_user(username_to_unfollow: str, request: Request, current_user:User = Depends(get_current_active_user)):
+@router.post("/{username}/unfollow/{username_to_unfollow}}",response_description="unfollow a user")
+async def unfollow_user(username: str, username_to_unfollow: str, request: Request):
     user_to_unfollow = await request.app.mongodb["users"].find_one(
         {"username": username_to_unfollow}
     )
     user = await request.app.mongodb["users"].find_one(
-        {"username": current_user}
+        {"username": username}
     )
-    request.app.mongodb["users"].update_one({"username":current_user.username}, {'$pull': {'following': user_to_unfollow["_id"]}})
+    request.app.mongodb["users"].update_one({"username":username}, {'$pull': {'following': user_to_unfollow["_id"]}})
     request.app.mongodb["users"].update_one({"username":username_to_unfollow}, {'$pull': {'followers': user["_id"]}})
     
     #count of number of following for current user
     count = len(user["following"]) -1
-    myquery = { "username": current_user.username }
+    myquery = { "username": username }
     newvalues = { "$set": { "following_count": count } }
     request.app.mongodb["users"].update_one(myquery, newvalues)
 
@@ -135,7 +137,7 @@ async def unfollow_user(username_to_unfollow: str, request: Request, current_use
     newvalues_u = { "$set": { "followers_count": count_u } }
     request.app.mongodb["users"].update_one(myquery_u, newvalues_u)
 
-    if(not user_to_unfollow==0):
+    if(len(user_to_unfollow)==0):
         raise HTTPException(status_code=404, detail=f"Username : {username_to_unfollow} not found")
     return{"unfollowed":username_to_unfollow}
 
