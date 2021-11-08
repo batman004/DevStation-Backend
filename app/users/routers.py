@@ -1,22 +1,13 @@
 from fastapi import APIRouter, Body, HTTPException, Request, status, Depends
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
-from fastapi.security import OAuth2PasswordRequestForm, oauth2
-from .models import User, Token, TokenData, Login
+from .models import User, Login
 from .hashing import Hash
-from .jwt_token import create_access_token, verify_token
-from .oauth import get_current_active_user
 from fastapi.security import OAuth2PasswordBearer
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 #router object for handling api routes
 router = APIRouter()
-
-@router.get("/",response_description="Get token of current user")
-async def home(token: str = Depends(oauth2_scheme)):
-    user_token = verify_token(token)
-    return {"token":user_token}
-
 
 # get user data {user_id},{username} -> user profile page
 @router.get("/{username}", response_description="List all details about a user")
