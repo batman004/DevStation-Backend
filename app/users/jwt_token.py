@@ -4,6 +4,7 @@ from dotenv import dotenv_values
 config = dotenv_values('.env')
 from .models import TokenData
 
+# token expiry time
 TD = int(config['ACCESS_TOKEN_EXPIRE_MINUTES'])
 
 def create_access_token(data: dict):
