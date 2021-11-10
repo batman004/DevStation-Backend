@@ -41,6 +41,9 @@ async def login(request: Request, user_to_login: Login = Body(...)):
 async def logout(username: str, request: Request):
     user = await request.app.mongodb["users"].find_one({"username":username})
     user["disabled"]=True
+    await request.app.mongodb["users"].update_one(
+    {"_id": user["_id"]}, {"$set": user}
+    )
     return{"message":f"user: {username} logged out"}
 
 
