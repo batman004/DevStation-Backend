@@ -13,6 +13,7 @@ def create_access_token(data: dict):
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, config['JWT_SECRET_KEY'], algorithm=config['ALGORITHM'])
     return encoded_jwt
+    
 def verify_token(token:str,credentials_exception):
     try:
         payload = jwt.decode(token, config['JWT_SECRET_KEY'], algorithm=config['ALGORITHM'])
@@ -23,3 +24,5 @@ def verify_token(token:str,credentials_exception):
         return token_data.username
     except JWTError:
         raise credentials_exception
+
+

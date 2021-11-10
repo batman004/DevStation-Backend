@@ -7,14 +7,20 @@ from .hashing import Hash
 from .jwt_token import create_access_token, verify_token
 from .oauth import get_current_active_user
 from fastapi.security import OAuth2PasswordBearer
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/user/login")
 
 #router object for handling api routes
 router = APIRouter()
 
-@router.get("/",response_description="Get token of current user")
+@router.get("/",response_model=TokenData,response_description="Get token data of current user")
 async def home(token: str = Depends(oauth2_scheme)):
-    user_token = verify_token(token)
+    credentials_exception = HTTPException(
+    status_code=status.HTTP_401_UNAUTHORIZED,
+    detail="Could not validate credentials",
+    headers={"WWW-Authenticate": "Bearer"},
+)
+    user_token = verify_token(token,credentials_exception)
+    print(user_token)
     return {"token":user_token}
 
 
@@ -25,7 +31,7 @@ async def read_root(current_user:User = Depends(get_current_active_user)):
 
 # get all users
 @router.get("/users", response_description="List all users")
-async def list_posts(request: Request):
+async def list_users(request: Request):
     users = []
     for doc in await request.app.mongodb["users"].find().to_list(length=100):
         users.append(doc)
@@ -35,13 +41,22 @@ async def list_posts(request: Request):
 @router.post("/login",response_model=Token, response_description="Login into app")
 async def login(request:Request, form_data: OAuth2PasswordRequestForm = Depends()):
     user = await request.app.mongodb["users"].find_one({"username":form_data.username})
+    print(form_data.username,form_data.password)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail = f'No user found with username {form_data.username}')
     if not Hash.verify(user["password"],form_data.password):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail = f'Wrong Username or password')
+    user["disabled"]=False
     access_token = create_access_token(data={"user": form_data.username })
     return {"access_token": access_token, "token_type": "bearer"}
 
+
+#logout 
+@router.post("/me/logout", response_description="Logout of the app")
+async def logout(request:Request,current_user:User = Depends(get_current_active_user)):
+    user = await request.app.mongodb["users"].find_one({"username":current_user.username})
+    user["disabled"]=True
+    return{"message":f"user{current_user.username} logged out"}
 
 #signup
 @router.post("/signup", response_description="Signup for a new user")
@@ -52,6 +67,7 @@ async def create_user(request: Request, user: User = Body(...)):
     user["followers"] = []
     user["followers_count"] = 0
     user["following_count"] = 0
+    user["disabled"]=True
     hashed_pass = Hash.bcrypt(user["password"])
     user["password"] = hashed_pass
     new_user = await request.app.mongodb["users"].insert_one(user)
@@ -141,23 +157,23 @@ async def unfollow_user(username_to_unfollow: str, request: Request, current_use
 
 
 
-# delete user
-@router.delete("/{id}/delete", response_description="Delete user account")
-async def delete_user(request: Request, id:str):
+# delete current user
+@router.delete("/me/delete", response_description="Delete user account")
+async def delete_user(request: Request, current_user:User = Depends(get_current_active_user)):
 
-    user = await request.app.mongodb["users"].find_one({"_id": id})
+    user = await request.app.mongodb["users"].find_one({"_id": current_user.id})
     # update posts collection as well when post is deleted
 
     for pid in user["posts_id"]:
         delete_post = await request.app.mongodb["posts"].delete_one({"_id": pid})
-        print("deleted post: ",pid)
+        #print("deleted post: ",pid)
 
     # remove user    
     delete_user = await request.app.mongodb["users"].delete_one({"_id": user["_id"]})
     if delete_user.deleted_count == 1:
-        return {"deleted user" :id }
+        return {"deleted user" :current_user.id }
 
-    raise HTTPException(status_code=404, detail=f"User {id} not found")
+    raise HTTPException(status_code=404, detail=f"User {current_user.id} not found")
 
 
 
