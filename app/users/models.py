@@ -16,6 +16,7 @@ class User(BaseModel):
     followers_count: Optional[int] 
     followers: Optional[list]
     posts_id: Optional[list]
+    disabled: Optional[bool] = None
 
     @validator('username')
     def username_alphanumeric(cls, v):
@@ -34,10 +35,11 @@ class User(BaseModel):
                 "gender": "Male",
                 "phone": "1234567890",
                 "following_count": 3,
-                "following":["575hg","74875h","fhdjfh"],
+                "following":["57hjhj5hg","748jhjkh75h","fhdjhjhkjfh"],
                 "followers_count": 1,
-                "followers": ["434hk"],
-                "posts_id":["8334","3h4k4","djfh44"]
+                "followers": ["4jhkjl34hk"],
+                "posts_id":["83iyuhh34","3hjkjkl4k4","djfjkjklh44"],
+                "disabled":False
             }
         }
 

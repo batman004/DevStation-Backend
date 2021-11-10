@@ -5,6 +5,7 @@ __pycache__/
 
 # MacOS
 DS_STORE
+.DS_STORE
 
 #deta 
 .deta
