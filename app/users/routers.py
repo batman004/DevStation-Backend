@@ -3,22 +3,20 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from .models import User, Login
 from .hashing import Hash
-from fastapi.security import OAuth2PasswordBearer
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 #router object for handling api routes
 router = APIRouter()
 
 # get user data {user_id},{username} -> user profile page
-@router.get("/{username}", response_description="List all details about a user")
-async def list_posts(username: str, request: Request):
+@router.get("/{username}/details", response_description="Show all details about a user")
+async def list_user(username: str, request: Request):
     if (user_data := await request.app.mongodb["users"].find_one({"username": username})) is not None:
         return user_data
     raise HTTPException(status_code=404, detail=f"User: {username} not found")
 
 # get all users
-@router.get("/users", response_description="List all users")
-async def list_posts(request: Request):
+@router.get("/all", response_description="List all users")
+async def list_all_users(request: Request):
     users = []
     for doc in await request.app.mongodb["users"].find().to_list(length=100):
         users.append(doc)
@@ -27,13 +25,23 @@ async def list_posts(request: Request):
 #login
 @router.post("/login")
 async def login(request: Request, user_to_login: Login = Body(...)):
-	user = await request.app.mongodb["users"].find_one({"username":user_to_login.username})
-	if not user:
-		raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail = f'No user found with username: {user_to_login.username}')
-	if not Hash.verify(user["password"],user_to_login.password):
-		raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail = f'Wrong Username or password')
+    user = await request.app.mongodb["users"].find_one({"username":user_to_login.username})
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail = f'No user found with username: {user_to_login.username}')
+    if not Hash.verify(user["password"],user_to_login.password):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail = f'Wrong Username or password')
+    user["disabled"]=False
+    await request.app.mongodb["users"].update_one(
+    {"_id": user["_id"]}, {"$set": user}
+    )
+    return {"login": "successful"}
 
-	return {"login": "successful"}
+#logout 
+@router.post("/logout", response_description="Logout of the app")
+async def logout(username: str, request: Request):
+    user = await request.app.mongodb["users"].find_one({"username":username})
+    user["disabled"]=True
+    return{"message":f"user: {username} logged out"}
 
 
 #signup
@@ -154,5 +162,13 @@ async def delete_user(request: Request, id:str):
 
 
 
-
+# Current active users :
+@router.get("/active", response_description="Show all active users")
+async def active_users( request: Request):
+    users = []
+    for doc in await request.app.mongodb["users"].find().to_list(length=100):
+        # check if user is disabled or not
+        if(not doc["disabled"]):
+            users.append(doc)
+    return users
 
