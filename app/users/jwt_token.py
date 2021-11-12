@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from dotenv import dotenv_values
+from .get_user import get_user
 config = dotenv_values('.env')
 from .models import TokenData
 
@@ -16,13 +17,16 @@ def create_access_token(data: dict):
     
 def verify_token(token:str,credentials_exception):
     try:
-        payload = jwt.decode(token, config['JWT_SECRET_KEY'], algorithm=config['ALGORITHM'])
+        payload = jwt.decode(token, config['JWT_SECRET_KEY'], algorithms=config['ALGORITHM'])
         username: str = payload.get("user")
         if username is None:
             raise credentials_exception
         token_data = TokenData(username=username)
-        return token_data.username
     except JWTError:
         raise credentials_exception
+    user = get_user(username=token_data.username)
+    if user is None:
+        raise credentials_exception
+    return user
 
 

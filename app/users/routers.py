@@ -1,13 +1,13 @@
 from fastapi import APIRouter, Body, HTTPException, Request, status, Depends
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
-from fastapi.security import OAuth2PasswordRequestForm, oauth2
-from .models import User, Token, TokenData, Login
+from fastapi.security import OAuth2PasswordRequestForm
+from .models import User, Token, TokenData
 from .hashing import Hash
 from .jwt_token import create_access_token, verify_token
 from .oauth import get_current_active_user
 from fastapi.security import OAuth2PasswordBearer
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/user/token")
 
 #router object for handling api routes
 router = APIRouter()
@@ -47,8 +47,7 @@ async def login(request:Request, form_data: OAuth2PasswordRequestForm = Depends(
 
     user["disabled"]=False
     await request.app.mongodb["users"].update_one(
-    {"_id": user["_id"]}, {"$set": user})
-
+    {"_id": user["_id"]}, {"$set": user})  
     access_token = create_access_token(data={"user": form_data.username })
     return {"access_token": access_token, "token_type": "bearer"}
 
