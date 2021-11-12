@@ -1,14 +1,16 @@
 import datetime
-from fastapi import APIRouter, Body, HTTPException, Request, status
+from fastapi import APIRouter, Body, HTTPException, Request, status, Depends
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
-
+from fastapi.security import OAuth2PasswordBearer
 from .models import PostModel, UpdatePostModel, Comment
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/user/token")
 
 #router object for handling api routes
 router = APIRouter()
 
-@router.post("/", response_description="Add new post")
+@router.post("/", dependencies = [Depends(oauth2_scheme)],response_description="Add new post")
 async def create_post(request: Request, post: PostModel = Body(...)):
     post = jsonable_encoder(post)
     current_datetime = str(datetime.datetime.now().strftime("%c"))
@@ -69,7 +71,7 @@ async def show_post(id: str, request: Request):
 
 
 
-@router.put("/{id}", response_description="Update a post")
+@router.put("/{id}",dependencies = [Depends(oauth2_scheme)],  response_description="Update a post")
 async def update_post(id: str, request: Request, post: UpdatePostModel = Body(...)):
     post = {k: v for k, v in post.dict().items() if v is not None}
     current_datetime = str(datetime.datetime.now().strftime("%c"))
@@ -94,7 +96,7 @@ async def update_post(id: str, request: Request, post: UpdatePostModel = Body(..
 
 
 
-@router.delete("/{id}", response_description="Delete Post")
+@router.delete("/{id}", dependencies = [Depends(oauth2_scheme)], response_description="Delete Post")
 async def delete_Post(id: str, request: Request):
 
     post = await request.app.mongodb["posts"].find_one({"_id": id})
@@ -109,7 +111,7 @@ async def delete_Post(id: str, request: Request):
 
 
 
-@router.post("/{id}/like", response_description="Like a post")
+@router.post("/{id}/like", dependencies = [Depends(oauth2_scheme)], response_description="Like a post")
 async def like_post(request: Request, id: str):
     post_to_like = await request.app.mongodb["posts"].find_one({"_id": id})
     if (post_to_like) is not None:
@@ -120,7 +122,7 @@ async def like_post(request: Request, id: str):
     raise HTTPException(status_code=404, detail=f"Post {id} not found")
 
 
-@router.post("/{id}/comment", response_description="Comment on a post")
+@router.post("/{id}/comment", dependencies = [Depends(oauth2_scheme)], response_description="Comment on a post")
 async def comment_post(id: str, request: Request, comment: Comment = Body(...)):
     comment = jsonable_encoder(comment)
     current_datetime = str(datetime.datetime.now().strftime("%c"))

@@ -7,7 +7,7 @@ from .hashing import Hash
 from .jwt_token import create_access_token, verify_token
 from .oauth import get_current_active_user
 from fastapi.security import OAuth2PasswordBearer
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/user/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 #router object for handling api routes
 router = APIRouter()
@@ -20,7 +20,6 @@ async def home(token: str = Depends(oauth2_scheme)):
     headers={"WWW-Authenticate": "Bearer"},
 )
     user_token = verify_token(token,credentials_exception)
-    print(user_token)
     return {"token":user_token}
 
 
@@ -38,15 +37,18 @@ async def list_users(request: Request):
     return users
 
 #login
-@router.post("/login",response_model=Token, response_description="Login into app")
+@router.post("/token",response_model=Token, response_description="Login into app")
 async def login(request:Request, form_data: OAuth2PasswordRequestForm = Depends()):
     user = await request.app.mongodb["users"].find_one({"username":form_data.username})
-    print(form_data.username,form_data.password)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail = f'No user found with username {form_data.username}')
     if not Hash.verify(user["password"],form_data.password):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail = f'Wrong Username or password')
+
     user["disabled"]=False
+    await request.app.mongodb["users"].update_one(
+    {"_id": user["_id"]}, {"$set": user})
+
     access_token = create_access_token(data={"user": form_data.username })
     return {"access_token": access_token, "token_type": "bearer"}
 
@@ -56,6 +58,9 @@ async def login(request:Request, form_data: OAuth2PasswordRequestForm = Depends(
 async def logout(request:Request,current_user:User = Depends(get_current_active_user)):
     user = await request.app.mongodb["users"].find_one({"username":current_user.username})
     user["disabled"]=True
+    await request.app.mongodb["users"].update_one(
+    {"_id": user["_id"]}, {"$set": user}
+    )
     return{"message":f"user{current_user.username} logged out"}
 
 #signup
@@ -176,6 +181,15 @@ async def delete_user(request: Request, current_user:User = Depends(get_current_
     raise HTTPException(status_code=404, detail=f"User {current_user.id} not found")
 
 
+# Current active users :
+@router.get("/active", response_description="Show all active users")
+async def active_users( request: Request):
+    users = []
+    for doc in await request.app.mongodb["users"].find().to_list(length=100):
+        # check if user is disabled or not
+        if(not doc["disabled"]):
+            users.append(doc)
+    return users
 
 
 

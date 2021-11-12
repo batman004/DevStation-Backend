@@ -1,9 +1,8 @@
 from fastapi import Depends,HTTPException, Request
 from .jwt_token import verify_token
 from .models import User
-from .auth import get_user
 from fastapi.security import OAuth2PasswordBearer
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/user/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 def get_current_user(token: str = Depends(oauth2_scheme)):
     credentials_exception = HTTPException(
@@ -12,7 +11,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
         headers={"WWW-Authenticate": "Bearer"},
     )
     verified_user = verify_token(token,credentials_exception)
-    get_user(verified_user,Request)
+    return verified_user
 
 async def get_current_active_user(current_user: User = Depends(get_current_user)):
     if current_user.disabled:
