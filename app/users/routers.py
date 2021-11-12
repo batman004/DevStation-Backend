@@ -34,13 +34,16 @@ async def login(request: Request, user_to_login: Login = Body(...)):
     await request.app.mongodb["users"].update_one(
     {"_id": user["_id"]}, {"$set": user}
     )
-    return {"login": "successful"}
+    return {"message": "login successful"}
 
 #logout 
 @router.post("/logout", response_description="Logout of the app")
 async def logout(username: str, request: Request):
     user = await request.app.mongodb["users"].find_one({"username":username})
     user["disabled"]=True
+    await request.app.mongodb["users"].update_one(
+    {"_id": user["_id"]}, {"$set": user}
+    )
     return{"message":f"user: {username} logged out"}
 
 
@@ -53,6 +56,7 @@ async def create_user(request: Request, user: User = Body(...)):
     user["followers"] = []
     user["followers_count"] = 0
     user["following_count"] = 0
+    user["disabled"]=True
     hashed_pass = Hash.bcrypt(user["password"])
     user["password"] = hashed_pass
     new_user = await request.app.mongodb["users"].insert_one(user)
@@ -89,7 +93,7 @@ async def follow_user(username: str, username_to_follow: str, request: Request):
     # request.app.mongodb["users"].update_one({"username":username},{'following_count' :count })
     if(len(user_to_follow)==0):
         raise HTTPException(status_code=404, detail=f"Username : {username_to_follow} not found")
-    return {username_to_follow:"followed"}
+    return {"message": f"{username_to_follow} followed"}
 
 
 # User feed : show posts from the users that the current user has followed :
@@ -109,7 +113,8 @@ async def user_feed(username: str, request: Request):
                 posts.append(post)
         return posts
 
-    raise HTTPException(status_code=404, detail=f"Follow users !")
+    # raise HTTPException(status_code=404, detail=f"Follow users !")
+    return {"error":"follow users"}
 
 
 # unfollow a user
@@ -138,7 +143,7 @@ async def unfollow_user(username: str, username_to_unfollow: str, request: Reque
 
     if(len(user_to_unfollow)==0):
         raise HTTPException(status_code=404, detail=f"Username : {username_to_unfollow} not found")
-    return{"unfollowed":username_to_unfollow}
+    return {"message": f"{user_to_unfollow} unfollowed"}
 
 
 
@@ -156,7 +161,7 @@ async def delete_user(request: Request, id:str):
     # remove user    
     delete_user = await request.app.mongodb["users"].delete_one({"_id": user["_id"]})
     if delete_user.deleted_count == 1:
-        return {"deleted user" :id }
+        return {"message" :f"deleted user id: {id}"}
 
     raise HTTPException(status_code=404, detail=f"User {id} not found")
 
