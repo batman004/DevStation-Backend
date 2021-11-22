@@ -34,7 +34,7 @@ async def list_posts(request: Request):
     return posts
 
 
-@router.get("/{username}", response_description="List all posts from a user")
+@router.get("/user/{username}", response_description="List all posts from a user")
 async def list_posts(username: str, request: Request):
     posts = []
     for doc in await request.app.mongodb["posts"].find({"username": username}).to_list(length=100):
@@ -114,8 +114,9 @@ async def like_post(request: Request, id: str):
     post_to_like = await request.app.mongodb["posts"].find_one({"_id": id})
     if (post_to_like) is not None:
         likes = int(post_to_like['likes'] + 1)
-        request.app.mongodb["posts"].update_one({"_id":post_to_like['_id']}, {'$set': {'likes':likes }})
-        return post_to_like
+        request.app.mongodb["posts"].update_one({"_id":id}, {'$set': {'likes':likes }})
+        updated_post = await request.app.mongodb["posts"].find_one({"_id": id})
+        return updated_post
 
     raise HTTPException(status_code=404, detail=f"Post {id} not found")
 
