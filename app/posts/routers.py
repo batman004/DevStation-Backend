@@ -34,7 +34,7 @@ async def list_all_posts(request: Request):
     return posts
 
 
-@router.get("/{username}", response_description="List all posts from a user")
+@router.get("/user/{username}", response_description="List all posts from a user")
 async def list_posts(username: str, request: Request):
     posts = []
     for doc in await request.app.mongodb["posts"].find({"username": username}).to_list(length=100):
@@ -44,6 +44,7 @@ async def list_posts(username: str, request: Request):
         return posts
 
     raise HTTPException(status_code=404, detail=f"Username : {username} not found")
+
 
 
 @router.get("/tag/{tag}", response_description="List all posts based on a tag")
