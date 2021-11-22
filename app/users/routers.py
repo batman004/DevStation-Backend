@@ -15,11 +15,23 @@ async def list_user(username: str, request: Request):
     raise HTTPException(status_code=404, detail=f"User: {username} not found")
 
 # get all users
-@router.get("/all", response_description="List all users")
+@router.get("/users", response_description="List all users")
 async def list_all_users(request: Request):
     users = []
     for doc in await request.app.mongodb["users"].find().to_list(length=100):
         users.append(doc)
+    return users
+
+# get top 3 users
+@router.get("/users/top3", response_description="List top three users")
+async def list_all_users(request: Request):
+    users = []
+    count=0
+    for doc in await request.app.mongodb["users"].find().to_list(length=100):
+        if(count>2):
+            break
+        users.append(doc)
+        count+=1
     return users
 
 #login
