@@ -27,7 +27,7 @@ async def create_post(request: Request, post: PostModel = Body(...)):
 
 
 @router.get("/", response_description="List all posts")
-async def list_posts(request: Request):
+async def list_all_posts(request: Request):
     posts = []
     for doc in await request.app.mongodb["posts"].find().to_list(length=100):
         posts.append(doc)
@@ -106,19 +106,20 @@ async def delete_Post(id: str, request: Request):
         return JSONResponse(status_code=status.HTTP_204_NO_CONTENT)
 
     raise HTTPException(status_code=404, detail=f"Post {id} not found")
-
-
-
+    
+    
 @router.post("/{id}/like", response_description="Like a post")
 async def like_post(request: Request, id: str):
     post_to_like = await request.app.mongodb["posts"].find_one({"_id": id})
     if (post_to_like) is not None:
         likes = int(post_to_like['likes'] + 1)
-        request.app.mongodb["posts"].update_one({"_id":post_to_like['_id']}, {'$set': {'likes':likes }})
-        return post_to_like
+        request.app.mongodb["posts"].update_one({"_id":id}, {'$set': {'likes':likes }})
+        updated_post = await request.app.mongodb["posts"].find_one({"_id": id})
+        return updated_post
 
     raise HTTPException(status_code=404, detail=f"Post {id} not found")
 
+    
 
 @router.post("/{id}/comment", response_description="Comment on a post")
 async def comment_post(id: str, request: Request, comment: Comment = Body(...)):
