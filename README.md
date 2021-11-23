@@ -117,8 +117,8 @@ Logs in a user and returns JWT token with a validity of 30 minutes
 * **Data Params**
 
     `username=str`
-
-    `password=str'
+    
+   `password=str`
     
    
 * **Success Response:**
