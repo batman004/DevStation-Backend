@@ -95,6 +95,7 @@ Routes | HTTP | Description
 **/user/{username}/unfollow/{username_to_unfollow}** | `POST` | Unfollow a user
 **/user/{username}/feed** | `GET` | Get feed of logged in user
 **/user/{id}/delete** | `DELETE` | Delete a user
+**/user/update/{id}** | `PUT` | Edit user profile
 
 
 ## V 1.1
