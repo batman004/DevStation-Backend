@@ -9,7 +9,6 @@ class PostModel(BaseModel):
     id: str = Field(default_factory=uuid.uuid4, alias="_id")
     username: str = Field(...)
     body: str = Field(...)
-    # time_added: datetime = Field(default_factory=datetime.now(), alias="time_added")
     time_added:Optional[str]
     likes:Optional[int]
     comments:Optional[list]
