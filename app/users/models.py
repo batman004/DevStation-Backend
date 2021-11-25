@@ -53,3 +53,28 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     username: Optional[str] = None
+
+
+class UpdateUserModel(BaseModel):
+
+    first_name: str = Field(...)
+    last_name: str = Field(...)
+    username: str = Field(...)
+    email: str = Field(...)
+    password: str = Field(...)
+    gender: str = Field(...)
+    phone: str = Field(...)
+
+    class Config:
+        schema_extra = {
+            "example": {
+
+                "first_name": "Johny",
+                "last_name": "Doe",
+                "username": "John1234",
+                "email": "john@gmail.com",
+                "password": "##@@##**",
+                "gender": "Male",
+                "phone": "1234567855"
+            }
+        }
