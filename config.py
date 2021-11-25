@@ -2,7 +2,8 @@ from pydantic import BaseSettings
 from dotenv import dotenv_values
 import os
 
-config = dotenv_values(".env") 
+config = dotenv_values(".env")
+
 prod = False
 
 class CommonSettings(BaseSettings):
