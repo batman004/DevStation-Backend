@@ -23,15 +23,14 @@ async def show_user(id: str, request: Request):
     
     
     
-    
-
 # get all users
-@router.get("/users", response_description="List all users")
-async def list_all_users(request: Request):
+@router.get("/users/all", response_description="List all users")
+async def list_all(request: Request):
     users = []
     for doc in await request.app.mongodb["users"].find().to_list(length=100):
         users.append(doc)
     return users
+
 
 # get top 3 users
 @router.get("/users/top3", response_description="List top three users")
@@ -76,8 +75,8 @@ async def create_user(request: Request, user: User = Body(...)):
     user = jsonable_encoder(user)
     user["following"] = []
     user["posts_id"] = []
-    user["requests_created"] = []
-    user["requests_accepted"] = []
+    user["request_created"] = []
+    user["request_accepted"] = []
     user["followers"] = []
     user["followers_count"] = 0
     user["following_count"] = 0
@@ -193,7 +192,7 @@ async def delete_user(request: Request, id:str):
 
 
 # Current active users :
-@router.get("/active", response_description="Show all active users")
+@router.get("/users/active", response_description="Show all active users")
 async def active_users( request: Request):
     users = []
     for doc in await request.app.mongodb["users"].find().to_list(length=100):

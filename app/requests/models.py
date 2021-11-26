@@ -39,3 +39,4 @@ class UpdateRequestModel(BaseModel):
                 "accepted": True,
             }
         }
+
