@@ -62,13 +62,13 @@ class TokenData(BaseModel):
 
 class UpdateUserModel(BaseModel):
 
-    first_name: str = Field(...)
-    last_name: str = Field(...)
-    username: str = Field(...)
-    email: str = Field(...)
-    password: str = Field(...)
-    gender: str = Field(...)
-    phone: str = Field(...)
+    first_name: Optional[str]
+    last_name: Optional[str]
+    username: Optional[str]
+    email: Optional[str]
+    password: Optional[str]
+    gender: Optional[str]
+    phone: Optional[str]
 
     class Config:
         schema_extra = {
