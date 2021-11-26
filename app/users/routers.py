@@ -13,6 +13,17 @@ async def list_user(username: str, request: Request):
     if (user_data := await request.app.mongodb["users"].find_one({"username": username})) is not None:
         return user_data
     raise HTTPException(status_code=404, detail=f"User: {username} not found")
+    
+    
+@router.get("/{id}", response_description="Show all details about a user")
+async def show_user(username: str, request: Request):
+    if (user_data := await request.app.mongodb["users"].find_one({"_id": id})) is not None:
+        return user_data
+    raise HTTPException(status_code=404, detail=f"User: {id} not found")
+    
+    
+    
+    
 
 # get all users
 @router.get("/users", response_description="List all users")
