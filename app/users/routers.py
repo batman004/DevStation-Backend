@@ -207,9 +207,7 @@ async def active_users( request: Request):
 async def update_user(id: str, request: Request, user: UpdateUserModel = Body(...)):
     user = {k: v for k, v in user.dict().items() if v is not None}
     if len(user) >= 1:
-        
-        hashed_pass = Hash.bcrypt(user["password"])
-        user["password"] = hashed_pass
+
         update_result = await request.app.mongodb["users"].update_one(
             {"_id": id}, {"$set": user}
         )
