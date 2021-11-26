@@ -235,7 +235,7 @@ async def user_feed_requests(username: str, request: Request):
     requests = []
     user = await request.app.mongodb["users"].find_one({"username":username})
     for doc in await request.app.mongodb["requests"].find().to_list(length=100):
-        if(doc["type"] == user["role"]):
+        if(doc["type"] == user["role"] and doc["accepted"]==False):
             requests.append(doc)
 
     return requests
