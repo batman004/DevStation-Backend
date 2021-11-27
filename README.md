@@ -27,6 +27,26 @@
                 }
 ```
 
+
+#### Request
+```
+    id: str 
+    user_to_request: str 
+    user_to_accept: Optional[str]
+    type: str 
+    body: str 
+    accepted: Optional[bool] = None
+
+            "example": {
+                "user_to_request": "1b5b2986-8fc0-4c85-89ea-1e74bfc24118",
+                "type": "Backend",
+                "body": "hey I need help with CORS error",
+                "accepted": False,
+            }
+```
+
+
+
 #### User
 ```
     id: str
@@ -42,7 +62,7 @@
     followers_count: int
     followers: list
     posts_id: list
-    disabled: bool
+    disabled: Optional[bool] = None
     
 
             "example": {
@@ -199,6 +219,21 @@ curl -X 'POST' \
   ]
 }'
 ```
+
+## V 1.1
+
+- Added `Collaboration Request` Feature
+
+
+### Request routes
+
+Routes | HTTP | Description
+--- | --- | ---
+**/request/create** | `POST` | create a request
+**/request/created/{id}** | `GET` | Get details of requests created by user
+**/request/{id}/accept** | `PUT` | accept a request
+**/request/accepted/{id}** | `GET` | list requests accepted by user
+
 
 
 ## Status Codes
