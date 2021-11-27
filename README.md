@@ -262,6 +262,13 @@ vi .env
     JWT_SECRET_KEY=
     ALGORITHM=
     ACCESS_TOKEN_EXPIRE_MINUTES=
+    
+#create a virtual environment
+virtualenv env
+source env/bin/activate (for MacOS/Linux)
+env\Scripts\activate (for Windows)
+
+# Driver file
 python main.py
 ```
 
