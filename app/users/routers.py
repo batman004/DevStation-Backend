@@ -142,7 +142,7 @@ async def user_feed(username: str, request: Request):
 
 
 # unfollow a user
-@router.post("/{username}/unfollow/{username_to_unfollow}}",response_description="unfollow a user")
+@router.post("/{username}/unfollow/{username_to_unfollow}",response_description="unfollow a user")
 async def unfollow_user(username: str, username_to_unfollow: str, request: Request):
     user_to_unfollow = await request.app.mongodb["users"].find_one(
         {"username": username_to_unfollow}
