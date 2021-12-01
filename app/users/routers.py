@@ -202,6 +202,7 @@ async def active_users( request: Request):
     return users
 
 
+
 # Edit user profile
 @router.put("/update/{id}", response_description="Update user profile")
 async def update_user(id: str, request: Request, user: UpdateUserModel = Body(...)):
@@ -226,6 +227,7 @@ async def update_user(id: str, request: Request, user: UpdateUserModel = Body(..
     raise HTTPException(status_code=404, detail=f"User ID: {id} not found")
 
 
+
 # Show requests based on Role type of user
 
 @router.get("/{username}/feed/request", response_description="Show all requests based on role")
@@ -237,3 +239,4 @@ async def user_feed_requests(username: str, request: Request):
             requests.append(doc)
 
     return requests
+

@@ -27,7 +27,7 @@ async def create_post(request: Request, post: PostModel = Body(...)):
 
 
 @router.get("/", response_description="List all posts")
-async def list_posts(request: Request):
+async def list_all_posts(request: Request):
     posts = []
     for doc in await request.app.mongodb["posts"].find().to_list(length=100):
         posts.append(doc)
@@ -44,6 +44,7 @@ async def list_posts(username: str, request: Request):
         return posts
 
     raise HTTPException(status_code=404, detail=f"Username : {username} not found")
+
 
 
 @router.get("/tag/{tag}", response_description="List all posts based on a tag")
@@ -106,9 +107,8 @@ async def delete_Post(id: str, request: Request):
         return JSONResponse(status_code=status.HTTP_204_NO_CONTENT)
 
     raise HTTPException(status_code=404, detail=f"Post {id} not found")
-
-
-
+    
+    
 @router.post("/{id}/like", response_description="Like a post")
 async def like_post(request: Request, id: str):
     post_to_like = await request.app.mongodb["posts"].find_one({"_id": id})
@@ -120,6 +120,7 @@ async def like_post(request: Request, id: str):
 
     raise HTTPException(status_code=404, detail=f"Post {id} not found")
 
+    
 
 @router.post("/{id}/comment", response_description="Comment on a post")
 async def comment_post(id: str, request: Request, comment: Comment = Body(...)):
