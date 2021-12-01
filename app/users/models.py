@@ -11,11 +11,14 @@ class User(BaseModel):
     password: str = Field(...)
     gender: str = Field(...)
     phone: str = Field(...)
+    role: str = Field(...)
     following_count: Optional[int] 
     following: Optional[list]
     followers_count: Optional[int] 
     followers: Optional[list]
     posts_id: Optional[list]
+    request_created: Optional[list]
+    request_accepted: Optional[list]
     disabled: Optional[bool] = None
 
     @validator('username')
@@ -34,11 +37,14 @@ class User(BaseModel):
                 "password": "##@@##**",
                 "gender": "Male",
                 "phone": "1234567890",
+                "role": "Backend",
                 "following_count": 3,
                 "following":["57hjhj5hg","748jhjkh75h","fhdjhjhkjfh"],
                 "followers_count": 1,
                 "followers": ["4jhkjl34hk"],
                 "posts_id":["83iyuhh34","3hjkjkl4k4","djfjkjklh44"],
+                "request_created" :["h4554h34","kjk66l4k4"],
+                "request_accepted" :["443s554h34","&&%66l4k4"],
                 "disabled":False
             }
         }
@@ -75,6 +81,8 @@ class UpdateUserModel(BaseModel):
                 "email": "john@gmail.com",
                 "password": "##@@##**",
                 "gender": "Male",
-                "phone": "1234567855"
+                "phone": "1234567855",
+                "role": "Backend"
             }
         }
+

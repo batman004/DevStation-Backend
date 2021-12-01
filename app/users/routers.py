@@ -13,14 +13,24 @@ async def list_user(username: str, request: Request):
     if (user_data := await request.app.mongodb["users"].find_one({"username": username})) is not None:
         return user_data
     raise HTTPException(status_code=404, detail=f"User: {username} not found")
-
+    
+    
+@router.get("/{id}", response_description="Show all details about a user")
+async def show_user(id: str, request: Request):
+    if (user_data := await request.app.mongodb["users"].find_one({"_id": id})) is not None:
+        return user_data
+    raise HTTPException(status_code=404, detail=f"User: {id} not found")
+    
+    
+    
 # get all users
-@router.get("/users", response_description="List all users")
-async def list_all_users(request: Request):
+@router.get("/users/all", response_description="List all users")
+async def list_all(request: Request):
     users = []
     for doc in await request.app.mongodb["users"].find().to_list(length=100):
         users.append(doc)
     return users
+
 
 # get top 3 users
 @router.get("/users/top3", response_description="List top three users")
@@ -65,6 +75,8 @@ async def create_user(request: Request, user: User = Body(...)):
     user = jsonable_encoder(user)
     user["following"] = []
     user["posts_id"] = []
+    user["request_created"] = []
+    user["request_accepted"] = []
     user["followers"] = []
     user["followers_count"] = 0
     user["following_count"] = 0
@@ -130,7 +142,7 @@ async def user_feed(username: str, request: Request):
 
 
 # unfollow a user
-@router.post("/{username}/unfollow/{username_to_unfollow}}",response_description="unfollow a user")
+@router.post("/{username}/unfollow/{username_to_unfollow}",response_description="unfollow a user")
 async def unfollow_user(username: str, username_to_unfollow: str, request: Request):
     user_to_unfollow = await request.app.mongodb["users"].find_one(
         {"username": username_to_unfollow}
@@ -180,7 +192,7 @@ async def delete_user(request: Request, id:str):
 
 
 # Current active users :
-@router.get("/active", response_description="Show all active users")
+@router.get("/users/active", response_description="Show all active users")
 async def active_users( request: Request):
     users = []
     for doc in await request.app.mongodb["users"].find().to_list(length=100):
@@ -192,8 +204,6 @@ async def active_users( request: Request):
 
 
 # Edit user profile
-
-
 @router.put("/update/{id}", response_description="Update user profile")
 async def update_user(id: str, request: Request, user: UpdateUserModel = Body(...)):
     user = {k: v for k, v in user.dict().items() if v is not None}
@@ -215,3 +225,18 @@ async def update_user(id: str, request: Request, user: UpdateUserModel = Body(..
         return existing_user
 
     raise HTTPException(status_code=404, detail=f"User ID: {id} not found")
+
+
+
+# Show requests based on Role type of user
+
+@router.get("/{username}/feed/request", response_description="Show all requests based on role")
+async def user_feed_requests(username: str, request: Request):
+    requests = []
+    user = await request.app.mongodb["users"].find_one({"username":username})
+    for doc in await request.app.mongodb["requests"].find().to_list(length=100):
+        if(doc["type"] == user["role"] and doc["accepted"]==False):
+            requests.append(doc)
+
+    return requests
+
