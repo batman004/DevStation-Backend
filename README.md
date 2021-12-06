@@ -268,6 +268,9 @@ virtualenv env
 source env/bin/activate (for MacOS/Linux)
 env\Scripts\activate (for Windows)
 
+# install dependencies
+pip install -r requirements.txt
+
 # Driver file
 python main.py
 ```
