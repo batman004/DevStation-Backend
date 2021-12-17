@@ -284,3 +284,26 @@ python main.py
 
 ![Devstation Homepage](https://user-images.githubusercontent.com/58564635/138453291-83c4ed3b-975e-41ef-8bb3-cb66dcffe15d.gif)
 
+
+### Available Features 🍻
+
+
+- [x] User Signup 💁
+- [x] User Login and Authentication 🔐
+- [x] CRUD operations with user posts 🗒️
+- [x] Like and comment on user posts ✍️
+- [X] Create Collaborative Requests ✋
+- [x] Accept Collaborative Requests ✋
+- [x] User Explore Feed 📱
+- [x] User Follow/ Unfollow 🙋‍♀️ 
+
+
+### Coming Soon 👷‍♂️
+
+
+- [ ] User Signup through third-party authentication services (Gmail/Github) 🔐
+- [ ] Add direct messaging 🗣️
+- [ ] Personalised User Explore Feed 📱
+- [ ] Add third party integrations to user profile (like github stats/spotify stats) 📈
+
+
