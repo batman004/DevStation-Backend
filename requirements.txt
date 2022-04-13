@@ -47,7 +47,7 @@ srv==1.1.0
 srvlookup==2.0.0
 starlette==0.14.2
 tomli==1.2.1
-Twisted==22.2.0
+Twisted==22.4.0
 typing-extensions==3.10.0.2
 ujson==5.1.0
 uvicorn==0.15.0
