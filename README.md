@@ -1,7 +1,6 @@
 # DevStation-Backend
 
-⚠️ Deployment Paused temporararily
-
+Check out the latest features [here](#available-features-)
 
 ### Tech stack
 - FastAPI (Python)
